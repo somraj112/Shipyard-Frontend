@@ -1,45 +1,95 @@
-/**
- * Dashboard Page
- *
- * Main intelligence dashboard — displays workflow metrics,
- * recent activity, and system health status.
- */
+'use client';
+
+import StatCard from '@/components/dashboard/StatCard';
+import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import HealthStatusWidget from '@/components/dashboard/HealthStatusWidget';
+import TeamList from '@/components/dashboard/TeamList';
+import WorkflowOverview from '@/components/dashboard/WorkflowOverview';
+import { SkeletonCard, Skeleton } from '@/components/ui';
+import { useDashboard } from '@/lib/hooks/useDashboard';
 
 export default function DashboardPage() {
+  const {
+    activity,
+    members,
+    repos,
+    issuesByState,
+    openPRs,
+    activeWorkflows,
+    loading,
+    error,
+  } = useDashboard();
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20 text-red-500">
+        Failed to load dashboard: {error}
+      </div>
+    );
+  }
+
   return (
-    <main style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-        ⚓ Shipyard Dashboard
-      </h1>
-      <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
-        Engineering Operations & Intelligence
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-bold">Dashboard</h1>
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+          Engineering operations overview
+        </p>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-        <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '12px', background: '#f9fafb' }}>
-          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Active Workflows
-          </h2>
-          <p style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem' }}>—</p>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Connect GitHub to get started</p>
+      {/* Stat cards */}
+      {loading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Active Workflows"
+            value={activeWorkflows}
+            hint="In progress or under review"
+          />
+          <StatCard label="Open PRs" value={openPRs} hint="Linked to issues" />
+          <StatCard
+            label="Team Members"
+            value={members.length}
+            hint="Active contributors"
+          />
+          <StatCard
+            label="Repositories"
+            value={repos.filter((r) => r.connected).length}
+            hint={`${repos.length} total tracked`}
+          />
+        </div>
+      )}
+
+      {/* Main grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {loading ? (
+            <Skeleton className="h-40 w-full rounded-xl" />
+          ) : (
+            <WorkflowOverview counts={issuesByState} />
+          )}
+
+          {loading ? (
+            <Skeleton className="h-64 w-full rounded-xl" />
+          ) : (
+            <ActivityFeed activities={activity} />
+          )}
         </div>
 
-        <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '12px', background: '#f9fafb' }}>
-          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Open PRs
-          </h2>
-          <p style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem' }}>—</p>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Sync engine pending</p>
-        </div>
-
-        <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '12px', background: '#f9fafb' }}>
-          <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Team Members
-          </h2>
-          <p style={{ fontSize: '2rem', fontWeight: 700, marginTop: '0.5rem' }}>—</p>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Auth system pending</p>
+        <div className="space-y-6">
+          <HealthStatusWidget />
+          {loading ? (
+            <Skeleton className="h-64 w-full rounded-xl" />
+          ) : (
+            <TeamList members={members} />
+          )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
