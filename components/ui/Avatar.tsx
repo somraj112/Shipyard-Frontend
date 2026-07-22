@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { sizeClasses } from './Button';
 
 interface AvatarProps {
   src?: string;
@@ -52,8 +53,8 @@ export default function Avatar({
       <Image
         src={src}
         alt={name}
-        width={sizes}
-        height={sizes}
+        width={sizePixels[size]}
+        height={sizePixels[size]}
         unoptimized
         className={cn(
           'rounded-full object-cover ring-2 ring-white dark:ring-zinc-800',
